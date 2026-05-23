@@ -19,16 +19,16 @@ USE techsphere_solutions;
 -- SECTION 1: WHERE CLAUSE BASICS
 -- =========================================================
 
--- Retrieve employees earning more than 50,000
+-- Retrieve employees earning more than 90,000
 SELECT *
 FROM job_roles
-WHERE base_salary > 50000;
+WHERE base_salary > 90000;
 
 
--- Retrieve employees earning at least 50,000
+-- Retrieve employees earning at least 90,000
 SELECT *
 FROM job_roles
-WHERE base_salary >= 50000;
+WHERE base_salary >= 90000;
 
 
 -- Retrieve employees in the Cybersecurity department

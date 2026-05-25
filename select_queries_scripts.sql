@@ -1,11 +1,12 @@
+```sql id="techsphere_case_statements_001"
 -- =========================================================
--- FILE: select queries.sql
+-- FILE: case_statements.sql
 -- PROJECT: TechSphere Solutions Database System
 -- AUTHOR: Benard Onyango Omoga
 -- DATABASE: MySQL
 -- DESCRIPTION:
--- Collection of SQL queries for data retrieval,
--- filtering, calculations, and relational analysis.
+-- Demonstrates CASE statements in MySQL
+-- using the TechSphere database structure.
 -- =========================================================
 
 
@@ -16,237 +17,245 @@ USE techsphere_solutions;
 
 
 -- =========================================================
--- SECTION 1: BASIC SELECT STATEMENTS
+-- SECTION 1: INTRODUCTION TO CASE STATEMENTS
+-- PURPOSE:
+-- CASE statements add conditional logic to SQL queries,
+-- similar to IF...ELSE statements in programming.
 -- =========================================================
 
--- Retrieve all employee records
+
+-- View all employee records
 SELECT *
 FROM employees;
 
 
--- Retrieve only employee first names
-SELECT first_name
-FROM employees;
+-- =========================================================
+-- SECTION 2: SIMPLE CASE STATEMENT
+-- PURPOSE:
+-- Categorize employees by age group
+-- =========================================================
 
-
--- Retrieve employee first and last names
-SELECT 
-    first_name,
-    last_name
-FROM employees;
-
-
--- Retrieve selected employee details
 SELECT
     first_name,
     last_name,
-    gender,
-    hire_date
+    TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) AS age,
+
+    CASE
+        WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) <= 30
+            THEN 'Young Professional'
+    END AS age_category
+
 FROM employees;
 
-
--- =========================================================
--- SECTION 2: SELECT WITH CALCULATIONS
--- =========================================================
-
--- Display salaries with an additional fixed bonus
-SELECT
-    role_title,
-    base_salary,
-    base_salary + 1000 AS salary_bonus_example
-FROM job_roles;
-
-
--- Display projected salary increase by 10%
-SELECT
-    role_title,
-    base_salary,
-    (base_salary * 1.10) AS increased_salary_10_percent
-FROM job_roles;
+-- WHAT IT DOES:
+-- Calculates employee age
+-- Labels employees aged 30 or below as:
+-- "Young Professional"
 
 
 -- =========================================================
--- SECTION 3: DISTINCT VALUES
+-- SECTION 3: MULTIPLE CONDITIONS IN CASE
+-- PURPOSE:
+-- Create multiple employee age categories
 -- =========================================================
 
--- Display all department IDs (including duplicates)
-SELECT department_id
-FROM employees;
-
-
--- Display unique department IDs
-SELECT DISTINCT department_id
-FROM employees;
-
-
--- Display unique department names
-SELECT DISTINCT department_name
-FROM departments;
-
-
--- =========================================================
--- SECTION 4: FILTERING DATA USING WHERE
--- =========================================================
-
--- Retrieve employees from department 2
-SELECT *
-FROM employees
-WHERE department_id = 2;
-
-
--- Retrieve employees hired after 2022
 SELECT
     first_name,
     last_name,
-    hire_date
-FROM employees
-WHERE hire_date > '2022-01-01';
+    TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) AS age,
+
+    CASE
+        WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) <= 30
+            THEN 'Young Professional'
+
+        WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN 31 AND 45
+            THEN 'Experienced Professional'
+
+        WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) > 45
+            THEN 'Senior Professional'
+
+    END AS age_category
+
+FROM employees;
+
+-- WHAT IT DOES:
+-- Divides employees into:
+-- 1. Young Professional
+-- 2. Experienced Professional
+-- 3. Senior Professional
 
 
 -- =========================================================
--- SECTION 5: SORTING DATA USING ORDER BY
+-- SECTION 4: CASE WITH SALARY CALCULATIONS
+-- PURPOSE:
+-- Apply salary increment logic
 -- =========================================================
 
--- Sort employees alphabetically by first name
-SELECT
-    first_name,
-    last_name
-FROM employees
-ORDER BY first_name ASC;
-
-
--- Sort job roles by highest salary
 SELECT
     role_title,
-    base_salary
-FROM job_roles
-ORDER BY base_salary DESC;
+    base_salary,
+
+    CASE
+        WHEN base_salary >= 120000
+            THEN base_salary + (base_salary * 0.10)
+
+        WHEN base_salary < 120000
+            THEN base_salary + (base_salary * 0.05)
+
+    END AS revised_salary
+
+FROM job_roles;
+
+-- WHAT IT DOES:
+-- Gives:
+-- 10% increment for salaries >= 120000
+-- 5% increment for salaries below 120000
 
 
 -- =========================================================
--- SECTION 6: LIMITING RESULTS
+-- SECTION 5: CASE WITH BONUS CALCULATIONS
+-- PURPOSE:
+-- Add department-specific bonuses
 -- =========================================================
 
--- Retrieve first 3 employee records
-SELECT *
-FROM employees
-LIMIT 3;
-
-
--- =========================================================
--- SECTION 7: INNER JOIN OPERATIONS
--- =========================================================
-
--- Retrieve employees with their department names
 SELECT
-    e.employee_id,
     e.first_name,
     e.last_name,
-    d.department_name
+    d.department_name,
+    jr.base_salary,
+
+    CASE
+        WHEN jr.base_salary >= 120000
+            THEN jr.base_salary + (jr.base_salary * 0.10)
+
+        WHEN jr.base_salary < 120000
+            THEN jr.base_salary + (jr.base_salary * 0.05)
+
+    END AS revised_salary,
+
+    CASE
+        WHEN d.department_name = 'AI Research'
+            THEN jr.base_salary * 0.15
+
+        WHEN d.department_name = 'Cybersecurity'
+            THEN jr.base_salary * 0.10
+
+        ELSE 0
+
+    END AS bonus
+
 FROM employees e
+
+JOIN employee_positions ep
+    ON e.employee_id = ep.employee_id
+
+JOIN job_roles jr
+    ON ep.role_id = jr.role_id
+
 JOIN departments d
     ON e.department_id = d.department_id;
 
+-- WHAT IT DOES:
+-- Calculates:
+-- Salary increments
+-- Department bonuses
+
+-- BONUS RULES:
+-- AI Research staff get 15%
+-- Cybersecurity staff get 10%
+-- Others get no bonus
+
 
 -- =========================================================
--- SECTION 8: MULTI-TABLE JOIN ANALYSIS
+-- SECTION 6: PERFORMANCE CLASSIFICATION
+-- PURPOSE:
+-- Simulate employee ranking system
 -- =========================================================
 
--- Retrieve employees with job roles and salaries
 SELECT
-    e.first_name,
-    e.last_name,
+    role_title,
+    base_salary,
+
+    CASE
+        WHEN base_salary >= 150000
+            THEN 'Executive Level'
+
+        WHEN base_salary BETWEEN 100000 AND 149999
+            THEN 'Senior Level'
+
+        WHEN base_salary BETWEEN 70000 AND 99999
+            THEN 'Mid Level'
+
+        ELSE 'Entry Level'
+
+    END AS salary_grade
+
+FROM job_roles;
+
+-- WHAT IT DOES:
+-- Categorizes job roles into salary bands
+
+
+-- =========================================================
+-- SECTION 7: PRACTICAL BUSINESS ANALYTICS
+-- PURPOSE:
+-- HR and payroll decision support
+-- =========================================================
+
+SELECT
+    CONCAT(e.first_name, ' ', e.last_name) AS employee_name,
+    d.department_name,
     jr.role_title,
-    jr.base_salary
+    jr.base_salary,
+
+    CASE
+        WHEN jr.base_salary >= 140000
+            THEN 'High Cost Employee'
+
+        WHEN jr.base_salary BETWEEN 90000 AND 139999
+            THEN 'Moderate Cost Employee'
+
+        ELSE 'Low Cost Employee'
+
+    END AS employee_cost_category
+
 FROM employees e
+
 JOIN employee_positions ep
     ON e.employee_id = ep.employee_id
+
 JOIN job_roles jr
-    ON ep.role_id = jr.role_id;
+    ON ep.role_id = jr.role_id
 
-
--- =========================================================
--- SECTION 9: AGGREGATE FUNCTIONS
--- =========================================================
-
--- Count total employees
-SELECT COUNT(*) AS total_employees
-FROM employees;
-
-
--- Calculate average salary
-SELECT AVG(base_salary) AS average_salary
-FROM job_roles;
-
-
--- Find highest salary
-SELECT MAX(base_salary) AS highest_salary
-FROM job_roles;
-
-
--- Find lowest salary
-SELECT MIN(base_salary) AS lowest_salary
-FROM job_roles;
-
-
--- =========================================================
--- SECTION 10: GROUP BY ANALYSIS
--- =========================================================
-
--- Average salary by department
-SELECT
-    d.department_name,
-    AVG(jr.base_salary) AS average_salary
-FROM employees e
 JOIN departments d
-    ON e.department_id = d.department_id
-JOIN employee_positions ep
-    ON e.employee_id = ep.employee_id
-JOIN job_roles jr
-    ON ep.role_id = jr.role_id
-GROUP BY d.department_name;
+    ON e.department_id = d.department_id;
 
-
--- Count employees in each department
-SELECT
-    d.department_name,
-    COUNT(e.employee_id) AS total_employees
-FROM departments d
-LEFT JOIN employees e
-    ON d.department_id = e.department_id
-GROUP BY d.department_name;
+-- WHAT IT DOES:
+-- Helps management classify employees
+-- based on payroll cost levels
 
 
 -- =========================================================
--- SECTION 11: ALIASING COLUMNS
+-- KEY CONCEPT SUMMARY
 -- =========================================================
 
--- Rename output columns for readability
-SELECT
-    first_name AS FirstName,
-    last_name AS LastName,
-    hire_date AS EmploymentDate
-FROM employees;
+-- CASE:
+-- Adds conditional logic to SQL queries
 
+-- WHEN:
+-- Specifies condition to test
 
--- =========================================================
--- SECTION 12: CONDITIONAL FILTERING
--- =========================================================
+-- THEN:
+-- Specifies returned value if condition is TRUE
 
--- Retrieve employees with salaries greater than 100,000
-SELECT
-    e.first_name,
-    e.last_name,
-    jr.role_title,
-    jr.base_salary
-FROM employees e
-JOIN employee_positions ep
-    ON e.employee_id = ep.employee_id
-JOIN job_roles jr
-    ON ep.role_id = jr.role_id
-WHERE jr.base_salary > 100000;
+-- ELSE:
+-- Optional default value
+
+-- END:
+-- Closes CASE statement
 
 
 -- =========================================================
 -- END OF FILE
 -- =========================================================
+```

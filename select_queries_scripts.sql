@@ -1,4 +1,3 @@
-```sql id="techsphere_case_statements_001"
 -- =========================================================
 -- FILE: case_statements.sql
 -- PROJECT: TechSphere Solutions Database System
